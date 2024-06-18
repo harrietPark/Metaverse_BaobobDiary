@@ -80,3 +80,9 @@ BaobobDiary/UserSettings/
 # Allow ProjectSettings folder to be included
 !ProjectSettings/
 !ProjectSettings/*.asset
+
+# Ignore specific Unity-generated user-specific settings
+ProjectSettings/EditorBuildSettings.asset
+ProjectSettings/EditorSettings.asset
+ProjectSettings/ProjectSettings.asset
+ProjectSettings/QualitySettings.asset
