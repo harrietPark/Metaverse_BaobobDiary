@@ -9,6 +9,7 @@
     "com.meta.xr.sdk.interaction": "65.0.0",
     "com.meta.xr.sdk.interaction.ovr": "65.0.0",
     "com.meta.xr.sdk.interaction.ovr.samples": "65.0.0",
+    "com.srcnalt.openai-unity": "https://github.com/srcnalt/OpenAI-Unity.git",
     "com.unity.collab-proxy": "2.3.1",
     "com.unity.feature.development": "1.0.1",
     "com.unity.render-pipelines.universal": "14.0.10",
