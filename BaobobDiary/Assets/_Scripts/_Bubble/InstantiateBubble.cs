@@ -4,23 +4,25 @@ using UnityEngine;
 
 public class InstantiateBubble : MonoBehaviour
 {
+    [SerializeField] GameObject sphere;
+
     public void InsBubble()
     {
-        this.gameObject.SetActive(true);
+        sphere.SetActive(true);
     }
 
     public void DeactivateBubble()
     {
-        this.gameObject.SetActive(false);
+        sphere.SetActive(false);
     }
 
     public void PrintDebug()
     {
-        Debug.Log("left active");
+        Debug.Log(" active");
     }
 
     public void PrintDebugRight()
     {
-        Debug.Log("right active");
+        Debug.Log("not active");
     }
 }
