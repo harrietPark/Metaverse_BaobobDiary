@@ -15,12 +15,14 @@ public class MeditationController : MonoBehaviour
 
     [Tooltip("Assets")]
     [SerializeField] GameObject tutorialHand;
+    [SerializeField] Animator tutorialHandAnimator;
     [SerializeField] GameObject oneTwoThreeUI;
     [SerializeField] GameObject sphere;
 
     [SerializeField] Transform playerTransform;
 
     [Tooltip("Events")]
+    [HideInInspector] public UnityEvent onNarration0Finished;
     [HideInInspector] public UnityEvent onNarration1Finished;
     [HideInInspector] public UnityEvent onNarration2Finished;
     [HideInInspector] public UnityEvent onNarration3Finished;
@@ -28,13 +30,19 @@ public class MeditationController : MonoBehaviour
     [HideInInspector] public UnityEvent onNarration5Finished;
     [HideInInspector] public UnityEvent onNarration6Finished;
     [HideInInspector] public UnityEvent onNarration7Finished;
-    [HideInInspector] public UnityEvent onNarration8Finished;
 
     [HideInInspector] public UnityEvent onOneTwoThreeFinished;
 
     private bool isCheckingGesture = false;
     [SerializeField] ActiveStateGroup poseActivateStateGroup;
     [SerializeField] ActiveStateGroup gestureActivateStateGroup;
+
+    private void Start()
+    {
+        tutorialHand.SetActive(false);
+        oneTwoThreeUI.SetActive(false);
+        oneTwoThreeUI.SetActive(false);
+    }
 
     //bind this to the meditation start button
     public void MeditationStartButton()
@@ -43,7 +51,7 @@ public class MeditationController : MonoBehaviour
         //TODO : make the environment darker
 
         //어서와. 지금부터 잠시 머리를 비워볼 거야. 자, 몸의 긴장을 풀고, 지금 이 순간에 정신을 집중해 봐.
-        PlayNarration(0, onNarration1Finished, false, null);
+        PlayNarration(0, onNarration0Finished, false, null);
     }
 
     private void PlayMeditationBGMusic()
@@ -105,7 +113,7 @@ public class MeditationController : MonoBehaviour
 
     private void OnEnable()
     {
-        onNarration8Finished.AddListener(OnNarration0Finished);
+        onNarration0Finished.AddListener(OnNarration0Finished);
         onNarration1Finished.AddListener(OnNarration1Finished);
         onNarration2Finished.AddListener(OnNarration2Finished);
         onNarration3Finished.AddListener(OnNarration3Finished);
@@ -119,7 +127,7 @@ public class MeditationController : MonoBehaviour
 
     private void OnDisable()
     {
-        onNarration8Finished.RemoveListener(OnNarration0Finished);
+        onNarration0Finished.RemoveListener(OnNarration0Finished);
         onNarration1Finished.RemoveListener(OnNarration1Finished);
         onNarration2Finished.RemoveListener(OnNarration2Finished);
         onNarration3Finished.RemoveListener(OnNarration3Finished);
@@ -138,6 +146,7 @@ public class MeditationController : MonoBehaviour
         PlayNarration(1, onNarration1Finished, false, null);
         //tutorial hand shows up in front of the player 
         tutorialHand.SetActive(true);
+        tutorialHandAnimator.SetTrigger("wave");
         //ui shows below the tutorial hand ("동작을 따라하세요")
     }
 
@@ -146,6 +155,7 @@ public class MeditationController : MonoBehaviour
         //narration2 starts
         //숨을 크게 들이쉬면서 손을 벌려봐. 
         PlayNarration(2, onNarration2Finished, true, poseActivateStateGroup);
+        tutorialHandAnimator.SetTrigger("circlePose");
 
         //after narration2 ends, Check user does the right pose
         //if they did right,
@@ -159,6 +169,7 @@ public class MeditationController : MonoBehaviour
         //narration3 starts
         //그리고 그대로 숨을 끝까지 내뱉으면서 손을 앞으로 뻗어보자. 
         PlayNarration(3, onNarration3Finished, true, gestureActivateStateGroup);
+        tutorialHandAnimator.SetTrigger("pushCircle");
     }
 
     private void OnNarration3Finished()
@@ -166,6 +177,7 @@ public class MeditationController : MonoBehaviour
         //narration4 starts
         //잘했어 다시 한 번. 손에 집중해서 숨을 들이쉬자. 
         PlayNarration(4, onNarration4Finished, true, poseActivateStateGroup);
+        tutorialHandAnimator.SetTrigger("circlePose");
     }
 
     private void OnNarration4Finished()
@@ -173,6 +185,7 @@ public class MeditationController : MonoBehaviour
         //narration5 starts
         //잠시 머금고 내뱉어. 
         PlayNarration(5, onNarration5Finished, true, gestureActivateStateGroup);
+        tutorialHandAnimator.SetTrigger("pushCircle");
     }
 
     private void OnNarration5Finished()
@@ -180,6 +193,7 @@ public class MeditationController : MonoBehaviour
         //narration6 starts
         //좋아 마지막이야. 호흡이 오가는 그 길을 느껴봐. 
         PlayNarration(6, onNarration6Finished, true, poseActivateStateGroup);
+        tutorialHandAnimator.SetTrigger("circlePose");
     }
 
     private void OnNarration6Finished()
@@ -187,6 +201,7 @@ public class MeditationController : MonoBehaviour
         //narration7 starts
         //깊게 내뱉으며 손을 모아줘. 
         PlayNarration(7, onNarration7Finished, true, gestureActivateStateGroup);
+        tutorialHandAnimator.SetTrigger("pushCircle");
     }
 
     private void OnNarration7Finished()
