@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using static UnityEngine.GraphicsBuffer;
 
 public class MeditationController : MonoBehaviour
 {
@@ -15,11 +16,12 @@ public class MeditationController : MonoBehaviour
 
     [Tooltip("Assets")]
     [SerializeField] GameObject tutorialHand;
-    [SerializeField] Animator tutorialHandAnimator;
     [SerializeField] GameObject oneTwoThreeUI;
     [SerializeField] GameObject sphere;
 
     [SerializeField] Transform playerTransform;
+    [SerializeField] float distance;
+    [SerializeField] Vector3 offset;
 
     [Tooltip("Events")]
     [HideInInspector] public UnityEvent onNarration0Finished;
@@ -31,27 +33,39 @@ public class MeditationController : MonoBehaviour
     [HideInInspector] public UnityEvent onNarration6Finished;
     [HideInInspector] public UnityEvent onNarration7Finished;
 
+    [HideInInspector] public UnityEvent onNarration8Finished;
+
     [HideInInspector] public UnityEvent onOneTwoThreeFinished;
 
     private bool isCheckingGesture = false;
+    private bool isGestureCorrect = false;
+    private bool isButtonPressed = false;
+    Animator tutorialHandAnimator;
+    GameObject tutorialHandInstance;
+    GameObject bubbleInstance;
+
     [SerializeField] ActiveStateGroup poseActivateStateGroup;
     [SerializeField] ActiveStateGroup gestureActivateStateGroup;
 
     private void Start()
     {
-        tutorialHand.SetActive(false);
-        oneTwoThreeUI.SetActive(false);
-        oneTwoThreeUI.SetActive(false);
+        tutorialHandAnimator = tutorialHand.GetComponent<Animator>();
     }
 
     //bind this to the meditation start button
     public void MeditationStartButton()
     {
-        PlayMeditationBGMusic();
-        //TODO : make the environment darker
+        if (!isButtonPressed)
+        {
+            isButtonPressed = true;
+            PlayMeditationBGMusic();
+            //TODO : make the environment darker
 
-        //어서와. 지금부터 잠시 머리를 비워볼 거야. 자, 몸의 긴장을 풀고, 지금 이 순간에 정신을 집중해 봐.
-        PlayNarration(0, onNarration0Finished, false, null);
+            //어서와. (pause) 지금부터 잠시 머리를 비워볼거야.(pause)
+            //몸의 긴장을 풀고, 지금 이 순간에 정신을 집중해봐.
+            PlayNarration(0, onNarration0Finished, false, null);
+        }
+        
     }
 
     private void PlayMeditationBGMusic()
@@ -68,17 +82,48 @@ public class MeditationController : MonoBehaviour
 
     IEnumerator WaitForNarrationToEnd(float duration, UnityEvent onComplete, bool checkGesture, ActiveStateGroup activateStateGroup)
     {
-        yield return new WaitForSeconds(duration);
         if (checkGesture)
         {
-            StartCoroutine(CheckGesture(onComplete, activateStateGroup));
+            StartCoroutine(CheckGesture(activateStateGroup));
+        }
+
+        yield return new WaitForSeconds(duration);
+
+        if (checkGesture)
+        {
+            yield return StartCoroutine(WaitForAdditionalTime(3.0f, onComplete));
         }
         else
         {
             onComplete.Invoke();
         }
     }
-    private IEnumerator CheckGesture(UnityEvent onComplete, ActiveStateGroup activateStateGroup)
+
+    private IEnumerator WaitForAdditionalTime(float additionalTime, UnityEvent onComplete)
+    {
+        float elapsedTime = 0.0f;
+        bool hasTriggeredOneTwoThree = false;
+
+        while (elapsedTime < additionalTime)
+        {
+            if (isGestureCorrect)
+            {
+                isGestureCorrect = false;
+                hasTriggeredOneTwoThree = true;
+                PlayOneTwoThree(onComplete);
+                yield break;
+            }
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        if (!hasTriggeredOneTwoThree)
+        {
+            PlayOneTwoThree(onComplete);
+        }
+        
+    }
+
+    private IEnumerator CheckGesture(ActiveStateGroup activateStateGroup)
     {
         isCheckingGesture = true;
 
@@ -86,10 +131,12 @@ public class MeditationController : MonoBehaviour
         {
             if (activateStateGroup.Active)
             {
-                isCheckingGesture = false;
+                isGestureCorrect = true;
                 //TODO : tutorial hand glows? should do here or on the editor?
                 //play one two three
-                PlayOneTwoThree(onComplete);
+                isCheckingGesture = false;
+                yield break;
+                
             }
             yield return null;
         }
@@ -121,7 +168,9 @@ public class MeditationController : MonoBehaviour
         onNarration5Finished.AddListener(OnNarration5Finished);
         onNarration6Finished.AddListener(OnNarration6Finished);
         onNarration7Finished.AddListener(OnNarration7Finished);
-        
+
+        onNarration8Finished.AddListener(OnNarration8Finished);
+
         //onOneTwoThreeFinished.AddListener(OnOneTwoThreeFinished);
     }
 
@@ -135,27 +184,44 @@ public class MeditationController : MonoBehaviour
         onNarration5Finished.RemoveListener(OnNarration5Finished);
         onNarration6Finished.RemoveListener(OnNarration6Finished);
         onNarration7Finished.RemoveListener(OnNarration7Finished);
-        
+
+        onNarration8Finished.RemoveListener(OnNarration8Finished);
+
         //onOneTwoThreeFinished.RemoveListener(OnOneTwoThreeFinished);
+    }
+
+    private void InstantiateTutorialHand()
+    {
+        Vector3 tutorialHandPose = playerTransform.position + playerTransform.forward * distance + offset;
+        tutorialHandInstance = Instantiate(tutorialHand, tutorialHandPose, Quaternion.LookRotation(playerTransform.forward));
+        tutorialHandAnimator = tutorialHandInstance.GetComponent<Animator>();
+    }
+
+    private void InstantiateBubble()
+    {
+        Vector3 bubblePose = playerTransform.position + playerTransform.forward * distance + offset;
+        bubbleInstance = Instantiate(sphere, bubblePose, Quaternion.LookRotation(playerTransform.forward));
     }
 
     private void OnNarration0Finished()
     {
         //narration1 starts
-        //눈 앞에 보이는 두 손 보이지? 똑같이 자세를 취한 뒤, 두 손 사이의 공간에 네 에너지를 불어넣는다 생각하고 천천히 호흡을 해보자.
+        //눈 앞에 두 손 보이지? (손 wave)
+        //두 손을 따라하며 천천히 같이 호흡을 해보자.
         PlayNarration(1, onNarration1Finished, false, null);
         //tutorial hand shows up in front of the player 
-        tutorialHand.SetActive(true);
+        InstantiateTutorialHand();
         tutorialHandAnimator.SetTrigger("wave");
+
         //ui shows below the tutorial hand ("동작을 따라하세요")
     }
 
     private void OnNarration1Finished()
     {
         //narration2 starts
-        //숨을 크게 들이쉬면서 손을 벌려봐. 
+        //자, 손을 동그랗게 벌리며 숨을 크게 들이 쉬어봐. 숨을 참아야 해
         PlayNarration(2, onNarration2Finished, true, poseActivateStateGroup);
-        tutorialHandAnimator.SetTrigger("circlePose");
+        StartCoroutine(AnimationDelay(3.0f, "circlePose"));
 
         //after narration2 ends, Check user does the right pose
         //if they did right,
@@ -164,12 +230,18 @@ public class MeditationController : MonoBehaviour
         //when playing one two three, it's UI pops up
     }
 
+    IEnumerator AnimationDelay(float delay, string stringTrigger)
+    {
+        yield return new WaitForSeconds(delay);
+        tutorialHandAnimator.SetTrigger(stringTrigger);
+    }
+
     private void OnNarration2Finished()
     {
         //narration3 starts
         //그리고 그대로 숨을 끝까지 내뱉으면서 손을 앞으로 뻗어보자. 
         PlayNarration(3, onNarration3Finished, true, gestureActivateStateGroup);
-        tutorialHandAnimator.SetTrigger("pushCircle");
+        StartCoroutine(AnimationDelay(3.0f, "pushCircle"));
     }
 
     private void OnNarration3Finished()
@@ -177,7 +249,8 @@ public class MeditationController : MonoBehaviour
         //narration4 starts
         //잘했어 다시 한 번. 손에 집중해서 숨을 들이쉬자. 
         PlayNarration(4, onNarration4Finished, true, poseActivateStateGroup);
-        tutorialHandAnimator.SetTrigger("circlePose");
+        StartCoroutine(AnimationDelay(0.0f, "thumbsUp"));
+        //tutorialHandAnimator.SetTrigger("circlePose");
     }
 
     private void OnNarration4Finished()
@@ -185,7 +258,7 @@ public class MeditationController : MonoBehaviour
         //narration5 starts
         //잠시 머금고 내뱉어. 
         PlayNarration(5, onNarration5Finished, true, gestureActivateStateGroup);
-        tutorialHandAnimator.SetTrigger("pushCircle");
+        StartCoroutine(AnimationDelay(0.0f, "pushCircle"));
     }
 
     private void OnNarration5Finished()
@@ -193,7 +266,7 @@ public class MeditationController : MonoBehaviour
         //narration6 starts
         //좋아 마지막이야. 호흡이 오가는 그 길을 느껴봐. 
         PlayNarration(6, onNarration6Finished, true, poseActivateStateGroup);
-        tutorialHandAnimator.SetTrigger("circlePose");
+        StartCoroutine(AnimationDelay(0.0f, "thumbsUp"));
     }
 
     private void OnNarration6Finished()
@@ -201,16 +274,21 @@ public class MeditationController : MonoBehaviour
         //narration7 starts
         //깊게 내뱉으며 손을 모아줘. 
         PlayNarration(7, onNarration7Finished, true, gestureActivateStateGroup);
-        tutorialHandAnimator.SetTrigger("pushCircle");
+        StartCoroutine(AnimationDelay(0.0f, "pushCircle"));
     }
 
     private void OnNarration7Finished()
     {
+        Destroy(tutorialHand);
         //bubble 생성
-        Vector3 spherePos = playerTransform.position + playerTransform.forward * 2.0f;
-        Instantiate(sphere, spherePos, Quaternion.identity);
+        InstantiateBubble();
         //particle effect
         //seed 등장?
-        
+        PlayNarration(8, onNarration8Finished, false, null);
+    }
+
+    private void OnNarration8Finished()
+    {
+
     }
 }
