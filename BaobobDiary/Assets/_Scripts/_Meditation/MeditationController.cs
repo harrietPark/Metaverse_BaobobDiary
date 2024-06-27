@@ -23,6 +23,11 @@ public class MeditationController : MonoBehaviour
     [SerializeField] float distance;
     [SerializeField] Vector3 offset;
 
+    [SerializeField] SkinnedMeshRenderer leftHand;
+    [SerializeField] SkinnedMeshRenderer rightHand;
+    [SerializeField] Material defaultMat;
+    [SerializeField] Material highlightMat;
+
     [Tooltip("Events")]
     [HideInInspector] public UnityEvent onNarration0Finished;
     [HideInInspector] public UnityEvent onNarration1Finished;
@@ -77,6 +82,8 @@ public class MeditationController : MonoBehaviour
     {
         meditationNarrationAudioSource.clip = narrations[narrationIndex];
         meditationNarrationAudioSource.Play();
+        leftHand.sharedMaterial = defaultMat;
+        rightHand.sharedMaterial = defaultMat;
         StartCoroutine(WaitForNarrationToEnd(narrations[narrationIndex].length, onComplete, checkGesture, activateStateGroup));
     }
 
@@ -132,6 +139,8 @@ public class MeditationController : MonoBehaviour
             if (activateStateGroup.Active)
             {
                 isGestureCorrect = true;
+                leftHand.sharedMaterial = highlightMat;
+                rightHand.sharedMaterial = highlightMat;
                 //TODO : tutorial hand glows? should do here or on the editor?
                 //play one two three
                 isCheckingGesture = false;
@@ -279,7 +288,7 @@ public class MeditationController : MonoBehaviour
 
     private void OnNarration7Finished()
     {
-        Destroy(tutorialHand);
+        Destroy(tutorialHandInstance);
         //bubble »ý¼º
         InstantiateBubble();
         //particle effect
