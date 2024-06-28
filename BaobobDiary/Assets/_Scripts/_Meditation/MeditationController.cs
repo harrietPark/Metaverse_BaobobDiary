@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using Meta.XR.MRUtilityKit;
 using static UnityEngine.GraphicsBuffer;
 
 public class MeditationController : MonoBehaviour
@@ -20,8 +21,10 @@ public class MeditationController : MonoBehaviour
     [SerializeField] GameObject sphere;
 
     [SerializeField] Transform playerTransform;
-    [SerializeField] float distance;
-    [SerializeField] Vector3 offset;
+    [SerializeField] float tutorialHandDistance;
+    [SerializeField] float bubbleDistance;
+    [SerializeField] Vector3 tutorialHandOffset;
+    [SerializeField] Vector3 bubbleOffset;
 
     [SerializeField] SkinnedMeshRenderer leftHand;
     [SerializeField] SkinnedMeshRenderer rightHand;
@@ -52,6 +55,8 @@ public class MeditationController : MonoBehaviour
     [SerializeField] ActiveStateGroup poseActivateStateGroup;
     [SerializeField] ActiveStateGroup gestureActivateStateGroup;
 
+    [SerializeField] private OVRPassthroughLayer _passthroughLayer;
+
     private void Start()
     {
         tutorialHandAnimator = tutorialHand.GetComponent<Animator>();
@@ -65,12 +70,37 @@ public class MeditationController : MonoBehaviour
             isButtonPressed = true;
             PlayMeditationBGMusic();
             //TODO : make the environment darker
-
+            StartCoroutine(AdjustLighting(-0.5f, 4f));
             //어서와. (pause) 지금부터 잠시 머리를 비워볼거야.(pause)
             //몸의 긴장을 풀고, 지금 이 순간에 정신을 집중해봐.
             PlayNarration(0, onNarration0Finished, false, null);
         }
         
+    }
+
+    private IEnumerator AdjustLighting(float targetBrightness, float duration)
+    {
+        if (_passthroughLayer != null)
+        {
+            float startBrightness = _passthroughLayer.colorMapEditorBrightness;
+            float elapsedTime = 0f;
+
+            while (elapsedTime < duration)
+            {
+                elapsedTime += Time.deltaTime;
+                float newBrightness = Mathf.Lerp(startBrightness, targetBrightness, elapsedTime / duration);
+                Debug.Log($"Adjusting lighting with brightness: {newBrightness}");
+                _passthroughLayer.SetBrightnessContrastSaturation(newBrightness);
+                yield return null;
+            }
+
+            // Ensure the final brightness is set
+            _passthroughLayer.SetBrightnessContrastSaturation(targetBrightness);
+        }
+        else
+        {
+            Debug.LogError("Passthrough layer is not assigned.");
+        }
     }
 
     private void PlayMeditationBGMusic()
@@ -141,8 +171,6 @@ public class MeditationController : MonoBehaviour
                 isGestureCorrect = true;
                 leftHand.sharedMaterial = highlightMat;
                 rightHand.sharedMaterial = highlightMat;
-                //TODO : tutorial hand glows? should do here or on the editor?
-                //play one two three
                 isCheckingGesture = false;
                 yield break;
                 
@@ -201,14 +229,14 @@ public class MeditationController : MonoBehaviour
 
     private void InstantiateTutorialHand()
     {
-        Vector3 tutorialHandPose = playerTransform.position + playerTransform.forward * distance + offset;
+        Vector3 tutorialHandPose = playerTransform.position + playerTransform.forward * tutorialHandDistance + tutorialHandOffset;
         tutorialHandInstance = Instantiate(tutorialHand, tutorialHandPose, Quaternion.LookRotation(playerTransform.forward));
         tutorialHandAnimator = tutorialHandInstance.GetComponent<Animator>();
     }
 
     private void InstantiateBubble()
     {
-        Vector3 bubblePose = playerTransform.position + playerTransform.forward * distance + offset;
+        Vector3 bubblePose = playerTransform.position + playerTransform.forward * bubbleDistance + bubbleOffset;
         bubbleInstance = Instantiate(sphere, bubblePose, Quaternion.LookRotation(playerTransform.forward));
     }
 
@@ -231,12 +259,6 @@ public class MeditationController : MonoBehaviour
         //자, 손을 동그랗게 벌리며 숨을 크게 들이 쉬어봐. 숨을 참아야 해
         PlayNarration(2, onNarration2Finished, true, poseActivateStateGroup);
         StartCoroutine(AnimationDelay(3.0f, "circlePose"));
-
-        //after narration2 ends, Check user does the right pose
-        //if they did right,
-        //hand glows
-        //then play one two three
-        //when playing one two three, it's UI pops up
     }
 
     IEnumerator AnimationDelay(float delay, string stringTrigger)
@@ -259,7 +281,6 @@ public class MeditationController : MonoBehaviour
         //잘했어 다시 한 번. 손에 집중해서 숨을 들이쉬자. 
         PlayNarration(4, onNarration4Finished, true, poseActivateStateGroup);
         StartCoroutine(AnimationDelay(0.0f, "thumbsUp"));
-        //tutorialHandAnimator.SetTrigger("circlePose");
     }
 
     private void OnNarration4Finished()
@@ -288,11 +309,16 @@ public class MeditationController : MonoBehaviour
 
     private void OnNarration7Finished()
     {
+        StartCoroutine(ShowBubble(2.0f, 2.0f));
+        StartCoroutine(AdjustLighting(0.0f, 4f));
+    }
+
+    IEnumerator ShowBubble(float delay1, float delay2)
+    {
         Destroy(tutorialHandInstance);
-        //bubble 생성
+        yield return new WaitForSeconds(delay1);
         InstantiateBubble();
-        //particle effect
-        //seed 등장?
+        yield return new WaitForSeconds(delay2);
         PlayNarration(8, onNarration8Finished, false, null);
     }
 
