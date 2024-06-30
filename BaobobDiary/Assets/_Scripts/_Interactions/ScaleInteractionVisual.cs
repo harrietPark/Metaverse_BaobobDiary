@@ -6,7 +6,7 @@ using UnityEngine.Events;
 public class ScaleInteractionVisual : MonoBehaviour
 {
     [SerializeField] LineRenderer lineRenderer;
-    [SerializeField] GameObject leftHandSphere; 
+    [SerializeField] GameObject leftHandSphere;
     [SerializeField] GameObject rightHandSphere;
 
     [SerializeField] Texture _defaultIcon;
@@ -18,6 +18,9 @@ public class ScaleInteractionVisual : MonoBehaviour
     [SerializeField] float maxScale;
     [SerializeField] GameObject scaledObject;
 
+    [SerializeField] float scaleMultiplier = 2.0f; // Multiplier to make it easier to reach max scale
+    [SerializeField] float maxDistance = .35f; // Maximum distance threshold to show the line renderer
+
     private float maxScaleTimer = 0f;
     private const float maxScaleDuration = 1f;
 
@@ -25,7 +28,11 @@ public class ScaleInteractionVisual : MonoBehaviour
 
     private void Start()
     {
-        
+        // Ensure the event is not null
+        if (maxScaledForThreeSecs == null)
+        {
+            maxScaledForThreeSecs = new UnityEvent();
+        }
     }
 
     public void ShowRectile()
@@ -62,18 +69,27 @@ public class ScaleInteractionVisual : MonoBehaviour
     {
         if (isGestureActive)
         {
+            float distance = Vector3.Distance(leftHandSphere.transform.position, rightHandSphere.transform.position);
+
+            if (distance > maxDistance)
+            {
+                DisableLineRenderer();
+                return;
+            }
+
+            Debug.Log(distance);
+
             lineRenderer.SetPosition(0, leftHandSphere.transform.position);
             lineRenderer.SetPosition(1, rightHandSphere.transform.position);
 
-            float distance = Vector3.Distance(leftHandSphere.transform.position, rightHandSphere.transform.position);
-            float scaleFactor = Mathf.Clamp(distance, minScale, maxScale);
+            float scaleFactor = Mathf.Clamp(distance * scaleMultiplier, minScale, maxScale); // Apply multiplier
 
             scaledObject.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
 
-            if(Mathf.Approximately(scaleFactor, maxScale))
+            if (Mathf.Approximately(scaleFactor, maxScale))
             {
                 maxScaleTimer += Time.deltaTime;
-                if(maxScaleTimer >= maxScaleDuration)
+                if (maxScaleTimer >= maxScaleDuration)
                 {
                     maxScaledForThreeSecs.Invoke();
                     maxScaleTimer = 0f;
@@ -86,4 +102,3 @@ public class ScaleInteractionVisual : MonoBehaviour
         }
     }
 }
-

@@ -68,9 +68,7 @@ public class MeditationController : MonoBehaviour
     private void Start()
     {
         tutorialHandAnimator = tutorialHand.GetComponent<Animator>();
-        //bubble.SetActive(false);
-        
-        scaleInteractionVisual.maxScaledForThreeSecs.AddListener(OnMaxScaledForThreeSecs);
+        bubble.SetActive(false);
     }
 
     //bind this to the meditation start button
