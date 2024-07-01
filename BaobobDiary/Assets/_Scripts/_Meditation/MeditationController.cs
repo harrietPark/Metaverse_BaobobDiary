@@ -449,7 +449,7 @@ namespace meditation
             //잠시 머금고 내뱉어. 
             PlayNarration(5, onNarration5Finished, true, gestureActivateStateGroup, false);
             StartCoroutine(AnimationDelay(0.0f, "pushCircle"));
-            SetText(3f, true, "호흡에 맞춰\r\n동작을 따라하세요");
+            SetText(2f, true, "호흡에 맞춰\r\n동작을 따라하세요");
         }
 
         private void OnNarration5Finished()
